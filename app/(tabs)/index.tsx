@@ -1,11 +1,47 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Image, StyleSheet, Platform, View, TextInput, Button, FlatList } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { useState } from 'react';
+import { addClient, getClients, addSong, getSongs } from '../../dao/firestoreService';
+import SearchScreen from '@/components/youtube/Search';
+import MiniCard from '@/components/youtube/MiniCard';
+import { Song, Client } from '@/constants/Types'
 
 export default function HomeScreen() {
+
+  const [clientName, setClientName] = useState('')
+  const [clientOrder, setClientOrder] = useState('')
+  const [client, setClient] = useState({order: -1, name:'', referenceWeight: -1} as Client);
+  const [songList, setSongList] = useState([] as Song[]);
+
+  const handleAddClient = async () => {
+    if (clientName && clientOrder) {
+      let clientAux = {order: parseInt(clientOrder), name: clientName.trim(), referenceWeight: -1}
+      setClient(clientAux)
+      await addClient(clientAux);
+    }
+  };
+
+  const handleAddSong = async (videoId: any, title: any, channelTitle: any) => {
+      client.referenceWeight ++
+      setClient(client)
+      // update client
+      const newRow: Song = {id: parseInt('' + Math.random() * 10000), clientOrder: client.order, 
+        weight: client.referenceWeight, videoId, title, channelTitle
+      };
+
+      addSong(newRow)
+      
+      const docSongs: any = await getSongs()
+
+      setSongList(docSongs.map( (input: any) => {
+        return input.song
+      } ));
+  }
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -20,6 +56,58 @@ export default function HomeScreen() {
         <HelloWave />
       </ThemedView>
       <ThemedView style={styles.stepContainer}>
+        <ThemedText type="subtitle">Cliente</ThemedText>
+        <View style={{
+          padding: 5,
+          flexDirection: "row",
+          justifyContent: "space-around",
+          elevation: 5,
+        }}>
+          <TextInput style={{
+            width: "70%",
+            borderBlockColor: "black",
+            backgroundColor:"#e6e6e6",
+            borderCurve: "circular"
+          }} value={clientName} onChangeText={setClientName} 
+            placeholder='Digite o nome do cliente' />
+          
+        </View>
+        <ThemedText type="subtitle">N° Comanda</ThemedText>
+        <View style={{
+          padding: 5,
+          flexDirection: "row",
+          justifyContent: "space-around",
+          elevation: 5,
+        }}>
+          <TextInput style={{
+            width: "70%",
+            borderBlockColor: "black",
+            backgroundColor:"#e6e6e6",
+            borderCurve: "circular"
+          }} value={clientOrder} onChangeText={setClientOrder} 
+            placeholder='Digite sua comanda' />
+        </View>
+          <Button
+            onPress={() => handleAddClient()}
+            title="Adicionar Cliente"
+            color="#841584"
+            accessibilityLabel="Learn more about this purple button" />
+          {client.order !== -1 &&
+            <ThemedText type="subtitle">Cliente Atual: {client.name}. N° Comanda: {client.order}</ThemedText>}
+        <ThemedText type="subtitle">Música</ThemedText>
+        <SearchScreen addSongToList={handleAddSong} songList={songList} />
+        <ThemedView style={styles.stepContainer}>
+            <FlatList
+              data={songList}
+              renderItem={({ item, index }: any) => {
+                return <MiniCard
+                          videoId={item.videoId}
+                          title={item.title}
+                          channel={item.channelTitle}
+                          client={client.name} />
+          } } />
+
+      </ThemedView>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
         <ThemedText>
           Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
