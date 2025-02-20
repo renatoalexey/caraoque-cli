@@ -1,5 +1,5 @@
 
-export type Song = {id: number, clientOrder: number, weight: number,
+export type Song = {id: number, clientId: string, weight: number, createdAt: Date
      videoId: any, title: any, channelTitle: any}
 
-export type Client = {order: number, name: string, referenceWeight: number}
+export type Client = {name: string, referenceWeight: number, createdAt: Date}

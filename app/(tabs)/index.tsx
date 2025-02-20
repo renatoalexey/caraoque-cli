@@ -4,7 +4,7 @@ import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { addClient, getClients, addSong, getSongs } from '../../dao/firestoreService';
 import SearchScreen from '@/components/youtube/Search';
 import MiniCard from '@/components/youtube/MiniCard';
@@ -13,15 +13,29 @@ import { Song, Client } from '@/constants/Types'
 export default function HomeScreen() {
 
   const [clientName, setClientName] = useState('')
-  const [clientOrder, setClientOrder] = useState('')
-  const [client, setClient] = useState({order: -1, name:'', referenceWeight: -1} as Client);
+  const [clientId, setClientId] = useState('')
+  const [client, setClient] = useState({name:'', referenceWeight: -1} as Client);
   const [songList, setSongList] = useState([] as Song[]);
+  const [nextSongs, setNextSongs] = useState([] as Song[]);
+ 
+  useEffect(() => {
+   
+    const interval = setInterval(() => {
+      updateSongs()
+      console.log("blabla")
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, []);
 
   const handleAddClient = async () => {
-    if (clientName && clientOrder) {
-      let clientAux = {order: parseInt(clientOrder), name: clientName.trim(), referenceWeight: -1}
+    if (clientName) {
+      let clientAux = {name: clientName.trim(), referenceWeight: -1, createdAt: new Date()}
       setClient(clientAux)
-      await addClient(clientAux);
+      addClient(clientAux).then( (response: any) => {
+        console.log("Teste2 ###: " + response)
+        setClientId(response)
+      });
     }
   };
 
@@ -29,7 +43,7 @@ export default function HomeScreen() {
       client.referenceWeight ++
       setClient(client)
       // update client
-      const newRow: Song = {id: parseInt('' + Math.random() * 10000), clientOrder: client.order, 
+      const newRow: Song = {id: parseInt('' + Math.random() * 10000), clientId: clientId, createdAt: new Date(),
         weight: client.referenceWeight, videoId, title, channelTitle
       };
 
@@ -37,10 +51,26 @@ export default function HomeScreen() {
       
       const docSongs: any = await getSongs()
 
-      setSongList(docSongs.map( (input: any) => {
-        return input.song
-      } ));
+      const songs: Song[] = getSongsFromDocs( docSongs ) 
+
+      setSongList(songs.filter( (input: any) => input.clientId == clientId ));
+      console.log("Songs: " + JSON.stringify(songList))
   }
+
+  const updateSongs = async () => {
+      const docSongs: any = await getSongs()
+      const songs: Song[] = getSongsFromDocs( docSongs ) 
+
+      setNextSongs(songs.slice(0, 5))
+      setSongList(songs.filter( (input: any) => input.clientId == clientId ));
+  }
+
+  const getSongsFromDocs = ( (docSongs: any) : Song[] => {
+    return docSongs.map( (input: any) => {
+      delete input.id
+      return input
+    })
+  })
 
   return (
     <ParallaxScrollView
@@ -72,31 +102,17 @@ export default function HomeScreen() {
             placeholder='Digite o nome do cliente' />
           
         </View>
-        <ThemedText type="subtitle">N° Comanda</ThemedText>
-        <View style={{
-          padding: 5,
-          flexDirection: "row",
-          justifyContent: "space-around",
-          elevation: 5,
-        }}>
-          <TextInput style={{
-            width: "70%",
-            borderBlockColor: "black",
-            backgroundColor:"#e6e6e6",
-            borderCurve: "circular"
-          }} value={clientOrder} onChangeText={setClientOrder} 
-            placeholder='Digite sua comanda' />
-        </View>
           <Button
             onPress={() => handleAddClient()}
             title="Adicionar Cliente"
             color="#841584"
             accessibilityLabel="Learn more about this purple button" />
-          {client.order !== -1 &&
-            <ThemedText type="subtitle">Cliente Atual: {client.name}. N° Comanda: {client.order}</ThemedText>}
+          {clientId !== '' &&
+            <ThemedText type="subtitle">Cliente Atual: {client.name} ID: {clientId}</ThemedText>}
         <ThemedText type="subtitle">Música</ThemedText>
         <SearchScreen addSongToList={handleAddSong} songList={songList} />
         <ThemedView style={styles.stepContainer}>
+            <ThemedText type="subtitle">Suas músicas</ThemedText>
             <FlatList
               data={songList}
               renderItem={({ item, index }: any) => {
@@ -107,7 +123,20 @@ export default function HomeScreen() {
                           client={client.name} />
           } } />
 
-      </ThemedView>
+        </ThemedView>
+
+            <ThemedView style={styles.stepContainer}>
+            <ThemedText type="subtitle"> músicas</ThemedText>
+            <FlatList
+              data={nextSongs}
+              renderItem={({ item, index }: any) => {
+                return <MiniCard
+                          videoId={item.videoId}
+                          title={item.title}
+                          channel={item.channelTitle}
+                          client={item.clientId == clientId ? client.name: ''} />
+          } } />
+        </ThemedView>
         <ThemedText type="subtitle">Step 1: Try it</ThemedText>
         <ThemedText>
           Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.

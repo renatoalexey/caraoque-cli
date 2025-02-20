@@ -1,16 +1,22 @@
 // firestoreService.js
 import { db } from "./config";
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { Song } from '@/constants/Types'
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
+import { Client, Song } from '@/constants/Types'
 
 // 📌 Adicionar um usuário ao Firestore
-export const addClient = async (name: any) => {
+export const addClient = async (client: Client) => {
   try {
+
+    let clientId: any
     await addDoc(collection(db, "clients"), {
-      name,
-      createdAt: new Date(),
+      ...client
+    }).then( (response: any) => {
+      console.log("Teste ###: " + response['_key']['path']['segments'][1])
+      //console.log(JSON.stringify(response))
+      clientId = response['_key']['path']['segments'][1]
     });
     console.log("Cliente adicionado!");
+    return clientId
   } catch (error) {
     console.error("Erro ao adicionar cliente: ", error);
   }
@@ -29,10 +35,12 @@ export const getClients = async () => {
 
 // 📌 Adicionar um usuário ao Firestore
 export const addSong = async (song: Song) => {
+  
+  song.createdAt = new Date()
+
   try {
     await addDoc(collection(db, "songs"), {
-      song,
-      createdAt: new Date(),
+      ...song,
     });
     console.log("Canção adicionada!");
   } catch (error) {
@@ -51,6 +59,17 @@ export const getSongs = async () => {
   }
 };
 
+export const getClientSongs = async (clientId: string) => {
+  try {
+    const songsRef = collection(db, "songs")
+    const queryAux = query(songsRef, where("clientId", "==", clientId))
+    const querySnapshot = await getDocs(queryAux)
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Erro ao buscar usuários: ", error);
+    return [];
+  }
+}
 
 // 📌 Atualizar um usuário no Firestore
 export const updateUser = async (userId: any, newName: any) => {
