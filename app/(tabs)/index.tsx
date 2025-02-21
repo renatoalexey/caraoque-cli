@@ -30,11 +30,12 @@ export default function HomeScreen() {
 
   const handleAddClient = async () => {
     if (clientName) {
-      let clientAux = {name: clientName.trim(), referenceWeight: -1, createdAt: new Date()}
-      setClient(clientAux)
+      let clientAux: Client = {name: clientName.trim(), referenceWeight: -1, createdAt: new Date()}
       addClient(clientAux).then( (response: any) => {
         console.log("Teste2 ###: " + response)
         setClientId(response)
+        clientAux.id = response
+        setClient(clientAux)
       });
     }
   };
@@ -43,7 +44,7 @@ export default function HomeScreen() {
       client.referenceWeight ++
       setClient(client)
       // update client
-      const newRow: Song = {id: parseInt('' + Math.random() * 10000), clientId: clientId, createdAt: new Date(),
+      const newRow: Song = {clientId: client.id!, createdAt: new Date(),
         weight: client.referenceWeight, videoId, title, channelTitle
       };
 
@@ -62,7 +63,7 @@ export default function HomeScreen() {
       const songs: Song[] = getSongsFromDocs( docSongs ) 
 
       setNextSongs(songs.slice(0, 5))
-      setSongList(songs.filter( (input: any) => input.clientId == clientId ));
+      setSongList(songs.filter( (input: any) => input.clientId == client.id ));
   }
 
   const getSongsFromDocs = ( (docSongs: any) : Song[] => {
@@ -108,7 +109,7 @@ export default function HomeScreen() {
             color="#841584"
             accessibilityLabel="Learn more about this purple button" />
           {clientId !== '' &&
-            <ThemedText type="subtitle">Cliente Atual: {client.name} ID: {clientId}</ThemedText>}
+            <ThemedText type="subtitle">Cliente Atual: {client.name} ID: {client.id}</ThemedText>}
         <ThemedText type="subtitle">Música</ThemedText>
         <SearchScreen addSongToList={handleAddSong} songList={songList} />
         <ThemedView style={styles.stepContainer}>
