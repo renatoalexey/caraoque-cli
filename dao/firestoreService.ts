@@ -1,6 +1,6 @@
 // firestoreService.js
 import { db } from "./config";
-import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, orderBy } from "firebase/firestore";
 import { Client, Song } from '@/constants/Types'
 
 // 📌 Adicionar um usuário ao Firestore
@@ -53,6 +53,23 @@ export const getSongs = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, "songs"))
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  } catch (error) {
+    console.error("Erro ao buscar usuários: ", error);
+    return [];
+  }
+};
+
+export const getNextSongs = async () => {
+  try {
+    
+	  const songsRef = collection(db, "nextSongs");
+    const queryAux = query(songsRef, orderBy("createdAt", "asc"))
+
+    const snapshot = await getDocs(queryAux)
+    const docSnap = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    //console.log(JSON.stringify(docSnap))
+  return docSnap
+    
   } catch (error) {
     console.error("Erro ao buscar usuários: ", error);
     return [];

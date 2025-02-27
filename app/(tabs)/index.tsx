@@ -5,7 +5,7 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useState, useEffect } from 'react';
-import { addClient, getClients, addSong, getSongs } from '../../dao/firestoreService';
+import { addClient, getClients, addSong, getSongs, getNextSongs } from '../../dao/firestoreService';
 import SearchScreen from '@/components/youtube/Search';
 import MiniCard from '@/components/youtube/MiniCard';
 import { Song, Client } from '@/constants/Types'
@@ -20,10 +20,10 @@ export default function HomeScreen() {
  
   useEffect(() => {
    
+    console.log("wsfsdf")
     const interval = setInterval(() => {
       updateSongs()
-      console.log("blabla")
-    }, 30000)
+    }, 10000)
 
     return () => clearInterval(interval)
   }, []);
@@ -32,7 +32,6 @@ export default function HomeScreen() {
     if (clientName) {
       let clientAux: Client = {name: clientName.trim(), referenceWeight: -1, createdAt: new Date()}
       addClient(clientAux).then( (response: any) => {
-        console.log("Teste2 ###: " + response)
         setClientId(response)
         clientAux.id = response
         setClient(clientAux)
@@ -50,20 +49,22 @@ export default function HomeScreen() {
 
       addSong(newRow)
       
-      const docSongs: any = await getSongs()
-
-      const songs: Song[] = getSongsFromDocs( docSongs ) 
-
-      setSongList(songs.filter( (input: any) => input.clientId == clientId ));
-      console.log("Songs: " + JSON.stringify(songList))
+     updateSongs() 
   }
 
   const updateSongs = async () => {
       const docSongs: any = await getSongs()
-      const songs: Song[] = getSongsFromDocs( docSongs ) 
+      const nextSongsAux: any = await getNextSongs()
 
-      setNextSongs(songs.slice(0, 5))
-      setSongList(songs.filter( (input: any) => input.clientId == client.id ));
+      console.log("Teste ####: " + JSON.stringify(docSongs))
+      console.log("sdcsd ####: " + JSON.stringify(nextSongsAux))
+      let songFilter = nextSongsAux.filter( (ns: any) => ns.clientId == client.id )
+        .concat(docSongs.filter( (input: any) => input.clientId == client.id)
+    )
+     // let songFilter =       
+
+      setNextSongs(nextSongsAux)
+      setSongList(songFilter);
   }
 
   const getSongsFromDocs = ( (docSongs: any) : Song[] => {
@@ -100,16 +101,16 @@ export default function HomeScreen() {
             backgroundColor:"#e6e6e6",
             borderCurve: "circular"
           }} value={clientName} onChangeText={setClientName} 
-            placeholder='Digite o nome do cliente' />
+            placeholder='Digite o seu nome' />
           
         </View>
           <Button
             onPress={() => handleAddClient()}
-            title="Adicionar Cliente"
+            title="Salvar"
             color="#841584"
             accessibilityLabel="Learn more about this purple button" />
           {clientId !== '' &&
-            <ThemedText type="subtitle">Cliente Atual: {client.name} ID: {client.id}</ThemedText>}
+            <ThemedText type="subtitle">Bem vindo {client.name} !</ThemedText>}
         <ThemedText type="subtitle">Música</ThemedText>
         <SearchScreen addSongToList={handleAddSong} songList={songList} />
         <ThemedView style={styles.stepContainer}>
@@ -127,7 +128,7 @@ export default function HomeScreen() {
         </ThemedView>
 
             <ThemedView style={styles.stepContainer}>
-            <ThemedText type="subtitle"> músicas</ThemedText>
+            <ThemedText type="subtitle"> Fila de músicas</ThemedText>
             <FlatList
               data={nextSongs}
               renderItem={({ item, index }: any) => {
@@ -138,35 +139,7 @@ export default function HomeScreen() {
                           client={item.clientId == clientId ? client.name: ''} />
           } } />
         </ThemedView>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
+        
       </ThemedView>
     </ParallaxScrollView>
   );
