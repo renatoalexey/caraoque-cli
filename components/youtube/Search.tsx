@@ -25,7 +25,7 @@ const SearchScreen = (props: {addSongToList: any, songList: any})=>{
     const [loading,setLoading] = useState(false)
     const fetchData = () =>{
         setLoading(true)
-        fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${value}&type=video&key=AIzaSyAdMrmaepeFWaolsriMkpofsP1DdMt4SbI`)
+        fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=10&q=${value} karaoke&type=video&key=AIzaSyAdMrmaepeFWaolsriMkpofsP1DdMt4SbI`)
         .then(res=>res.json())
         .then(data=>{
 

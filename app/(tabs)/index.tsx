@@ -23,10 +23,10 @@ export default function HomeScreen() {
     console.log("wsfsdf")
     const interval = setInterval(() => {
       updateSongs()
-    }, 10000)
+    }, 5000)
 
     return () => clearInterval(interval)
-  }, []);
+  }, [client]);
 
   const handleAddClient = async () => {
     if (clientName) {
@@ -56,13 +56,15 @@ export default function HomeScreen() {
       const docSongs: any = await getSongs()
       const nextSongsAux: any = await getNextSongs()
 
-      console.log("Teste ####: " + JSON.stringify(docSongs))
-      console.log("sdcsd ####: " + JSON.stringify(nextSongsAux))
+      //console.log("Teste ####: " + JSON.stringify(docSongs))
+      //console.log("sdcsd ####: " + JSON.stringify(nextSongsAux))
+      console.log("iniciou update")
+      console.log("client id: " + client.id)
       let songFilter = nextSongsAux.filter( (ns: any) => ns.clientId == client.id )
         .concat(docSongs.filter( (input: any) => input.clientId == client.id)
     )
      // let songFilter =       
-
+    
       setNextSongs(nextSongsAux)
       setSongList(songFilter);
   }
