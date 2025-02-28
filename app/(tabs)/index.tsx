@@ -9,6 +9,7 @@ import { addClient, getClients, addSong, getSongs, getNextSongs } from '../../da
 import SearchScreen from '@/components/youtube/Search';
 import MiniCard from '@/components/youtube/MiniCard';
 import { Song, Client } from '@/constants/Types'
+import * as Notifications from "expo-notifications"
 
 export default function HomeScreen() {
 
@@ -20,17 +21,35 @@ export default function HomeScreen() {
  
   useEffect(() => {
    
-    console.log("wsfsdf")
     const interval = setInterval(() => {
       updateSongs()
-    }, 5000)
+    }, 500000)
 
     return () => clearInterval(interval)
   }, [client]);
 
+  const testNotify = async (songName: string) => {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+      }),
+    });
+
+    // Second, call scheduleNotificationAsync()
+    Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Caraoque',
+        body: `Sua música ${songName} está chegando!`,
+      },
+        trigger: null,
+      });
+  }
+
   const handleAddClient = async () => {
     if (clientName) {
-      let clientAux: Client = {name: clientName.trim(), referenceWeight: -1, createdAt: new Date()}
+      let clientAux: Client = {name: clientName.trim(), referenceWeight: 0, createdAt: new Date()}
       addClient(clientAux).then( (response: any) => {
         setClientId(response)
         clientAux.id = response
@@ -40,16 +59,17 @@ export default function HomeScreen() {
   };
 
   const handleAddSong = async (videoId: any, title: any, channelTitle: any) => {
-      client.referenceWeight ++
-      setClient(client)
-      // update client
-      const newRow: Song = {clientId: client.id!, createdAt: new Date(),
-        weight: client.referenceWeight, videoId, title, channelTitle
-      };
+    // update client
+    const newRow: Song = {clientId: client.id!, createdAt: new Date(),
+      weight: client.referenceWeight, videoId, title, channelTitle
+    };
+    
+    addSong(newRow)
 
-      addSong(newRow)
-      
-     updateSongs() 
+    client.referenceWeight ++
+    setClient(client)
+    
+    updateSongs() 
   }
 
   const updateSongs = async () => {
@@ -62,19 +82,17 @@ export default function HomeScreen() {
       console.log("client id: " + client.id)
       let songFilter = nextSongsAux.filter( (ns: any) => ns.clientId == client.id )
         .concat(docSongs.filter( (input: any) => input.clientId == client.id)
-    )
+      )
      // let songFilter =       
-    
+      
+      const notify = nextSongs.find( (ns: any) => ns.clientId == client.id && ns.nextSongs == false)
+
+      if(notify) {
+        testNotify(notify.channelTitle)
+      }
       setNextSongs(nextSongsAux)
       setSongList(songFilter);
   }
-
-  const getSongsFromDocs = ( (docSongs: any) : Song[] => {
-    return docSongs.map( (input: any) => {
-      delete input.id
-      return input
-    })
-  })
 
   return (
     <ParallaxScrollView
@@ -104,8 +122,12 @@ export default function HomeScreen() {
             borderCurve: "circular"
           }} value={clientName} onChangeText={setClientName} 
             placeholder='Digite o seu nome' />
-          
         </View>
+          <Button
+            onPress={() => testNotify()}
+            title="Teste"
+            color="#841584"
+            accessibilityLabel="Learn more about this purple button" />
           <Button
             onPress={() => handleAddClient()}
             title="Salvar"

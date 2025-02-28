@@ -33,6 +33,17 @@ export const getClients = async () => {
   }
 };
 
+// 📌 Atualizar um usuário no Firestore
+export const updateClient = async (clientId: any, referenceWeight: number) => {
+  try {
+    const clientRef = doc(db, "clients", clientId);
+    await updateDoc(clientRef, { referenceWeight });
+    console.log("Cliente atualizado!");
+  } catch (error) {
+    console.error("Erro ao atualizar cliente: ", error);
+  }
+};
+
 // 📌 Adicionar um usuário ao Firestore
 export const addSong = async (song: Song) => {
   
@@ -88,16 +99,6 @@ export const getClientSongs = async (clientId: string) => {
   }
 }
 
-// 📌 Atualizar um usuário no Firestore
-export const updateUser = async (userId: any, newName: any) => {
-  try {
-    const userRef = doc(db, "users", userId);
-    await updateDoc(userRef, { name: newName });
-    console.log("Usuário atualizado!");
-  } catch (error) {
-    console.error("Erro ao atualizar usuário: ", error);
-  }
-};
 
 // 📌 Deletar um usuário do Firestore
 export const deleteUser = async (userId: any) => {
